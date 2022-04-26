@@ -1,6 +1,6 @@
-# Cart application developed with Next.js React framework
+# Shopping Cart application developed with Next.js React framework
 
-This project contains the source code of a shopping cart using Redux for global state managemnent.\
+This project contains the source code of a shopping cart using Redux for global state managemnent.
 
 Here are some screenshots of the application.
 ![App Screenshot](https://i.postimg.cc/Fzf1bfHh/Screenshot-1.png)
@@ -15,7 +15,7 @@ Here is a list of the technologies used in this project.
 
 2. [React](https://reactjs.org/) - A very popular JavaScript DOM rendering framework for building scalable web applications using a component-based architecture.
 
-### Resources used
+## Resources used
 
 - [with-redux-thunk](https://github.com/vercel/next.js/tree/canary/examples/with-redux-thunk) - An example to show how to integrate Redux and Redux Thunk in Next.js.
 
