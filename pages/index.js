@@ -1,61 +1,146 @@
-import Head from 'next/head'
-import clientPromise from '../lib/mongodb'
+import Head from "next/head";
+import Link from "next/link";
+import { Item } from "../components/Item";
+import { Nav } from "../components/Nav";
+import { Total } from "../components/Total";
+import { useEffect, useState, useCallback } from "react";
 
-export default function Home({ isConnected }) {
+import { useDispatch, useSelector, connect } from "react-redux";
+import { bindActionCreators } from "redux";
+
+import { setCount } from "../store/actions/countAction";
+import { setCart, fetchItems } from "../store/actions/cartAction";
+
+import { wrapper } from "../store/store";
+
+export default function Home(props) {
+  const url = "./api/";
+  const fetchData = async () => {
+    setLoading(true);
+    const response = await fetch(url);
+    const cartLocal = await response.json();
+    setCartLocal(cartLocal);
+    setLoading(false);
+  };
+  const dispatch = useDispatch();
+  const count = useSelector((state) => state.count);
+
+  useEffect(() => {
+    fetchData();
+    if (count.count === 0) {
+      // to fetch data only once
+      dispatch(fetchItems());
+      dispatch(setCount("COUNT_INC"));
+    }
+  }, []);
+
+  const [cartLocal, setCartLocal] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const cart = useSelector((state) => state.cart);
+  const handleInc = (id) => {
+    setCartLocal(
+      cartLocal.map((i) => {
+        if (i.id === id) {
+          return { ...i, amount: i.amount + 1 };
+        } else return { ...i };
+      })
+    );
+  };
+
+  const handleDec = (id) => {
+    setCartLocal(
+      cartLocal
+        .map((i) => {
+          if (i.id === id) {
+            return { ...i, amount: i.amount === 0 ? 0 : i.amount - 1 };
+          } else return { ...i };
+        })
+        .filter((i) => i.amount !== 0)
+    );
+  };
+
+  const handleRemove = (id) => {
+    setCartLocal(cartLocal.filter((i) => i.id !== id));
+  };
+
+  const handleClear = () => {
+    setCartLocal([]);
+  };
+
   return (
     <div className="container">
       <Head>
         <title>Create Next App</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
       <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js with MongoDB!</a>
-        </h1>
-
-        {isConnected ? (
-          <h2 className="subtitle">You are connected to MongoDB</h2>
-        ) : (
-          <h2 className="subtitle">
-            You are NOT connected to MongoDB. Check the <code>README.md</code>{' '}
-            for instructions.
-          </h2>
-        )}
-
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
-
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+        <div className="comparaison">
+          <div className="itemsCont">
+            <Nav items={cartLocal} title="With useState" />
+            {!loading ? (
+              <>
+                {cartLocal.map((i) => (
+                  <Item
+                    key={i.id}
+                    item={i}
+                    handleInc={handleInc}
+                    handleDec={handleDec}
+                    handleRemove={handleRemove}
+                  />
+                ))}
+                {cartLocal.length > 0 && <hr className="hr" />}
+                <div className="totalClear">
+                  <Total items={cartLocal} />
+                  {cartLocal.length > 0 && (
+                    <button onClick={handleClear} className="clearButton">
+                      Clear cart
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  fontWeight: "700",
+                  marginTop: "50%",
+                }}
+              >
+                ...Loading
+              </div>
+            )}
+          </div>
+          <div className="itemsCont">
+            <Nav items={cart.cart} title="With Redux" />
+            {cart.cart.map((i) => (
+              <Item
+                key={i.id}
+                item={i}
+                handleInc={() => dispatch(setCart("INC_ITEM", i.id))}
+                handleDec={() => dispatch(setCart("DEC_ITEM", i.id))}
+                handleRemove={() => dispatch(setCart("REMOVE_ITEM", i.id))}
+              />
+            ))}
+            {cart.cart.length > 0 && <hr className="hr" />}
+            <div className="totalClear">
+              <Total items={cart.cart} />
+              {cart.cart.length > 0 && (
+                <button
+                  onClick={() => dispatch(setCart("CLEAR_CART"))}
+                  className="clearButton"
+                >
+                  Clear cart
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+        <Link href="/page2">
+          <a style={{ textAlign: "center", marginBottom: "20px" }}>
+            Go to page II to test
+          </a>
+        </Link>
       </main>
 
       <footer>
@@ -64,179 +149,18 @@ export default function Home({ isConnected }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by
           <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
         </a>
       </footer>
-
-      <style jsx>{`
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer img {
-          margin-left: 0.5rem;
-        }
-
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
-        }
-
-        .title {
-          margin: 0;
-          line-height: 1.15;
-          font-size: 4rem;
-        }
-
-        .title,
-        .description {
-          text-align: center;
-        }
-
-        .subtitle {
-          font-size: 2rem;
-        }
-
-        .description {
-          line-height: 1.5;
-          font-size: 1.5rem;
-        }
-
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
-        .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-          border: 1px solid #eaeaea;
-          border-radius: 10px;
-          transition: color 0.15s ease, border-color 0.15s ease;
-        }
-
-        .card:hover,
-        .card:focus,
-        .card:active {
-          color: #0070f3;
-          border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
-        }
-
-        .logo {
-          height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
     </div>
-  )
+  );
 }
-
-export async function getServerSideProps(context) {
-  try {
-    // client.db() will be the default database passed in the MONGODB_URI
-    // You can change the database by calling the client.db() function and specifying a database like:
-    // const db = client.db("myDatabase");
-    // Then you can execute queries against your database like so:
-    // db.find({}) or any of the MongoDB Node Driver commands
-    await clientPromise
-    return {
-      props: { isConnected: true },
-    }
-  } catch (e) {
-    console.error(e)
-    return {
-      props: { isConnected: false },
-    }
-  }
-}
+/*
+export const getStaticProps = wrapper.getStaticProps((store) => () => {
+  //store.dispatch(serverRenderClock(true))
+  store.dispatch(setCount("COUNT_RESET"));
+  //store.dispatch(setCart("CLEAR_CART"));
+  store.dispatch(fetchItems(1)); //SSG 1 to use an asolute url for fetching data
+});
+*/
