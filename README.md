@@ -2,8 +2,8 @@
 
 This project contains the source code of a shopping cart using Redux for global state managemnent.
 
-Here are some screenshots of the application.
-![App Screenshot](https://i.postimg.cc/Fzf1bfHh/Screenshot-1.png)
+Here are some screenshots of the application:
+![App Screenshot](https://i.postimg.cc/bNd219Yc/Screenshot-3.png)
 
 ![App Screenshot](https://i.postimg.cc/pLYGMCD5/Screenshot-2.png)
 
